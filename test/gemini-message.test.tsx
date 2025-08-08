@@ -1,0 +1,306 @@
+import React from 'react'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { GeminiMessage, ChatMessageDisplay } from '@/components/gemini-message'
+import type { ChatMessage } from '@/hooks/use-chat'
+
+// Mock clipboard API
+Object.assign(navigator, {
+  clipboard: {
+    writeText: vi.fn(),
+  },
+})
+
+// Mock motion components
+vi.mock('motion/react', () => ({
+  motion: {
+    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+    span: ({ children, ...props }: any) => <span {...props}>{children}</span>,
+  },
+  AnimatePresence: ({ children }: any) => children,
+}))
+
+describe('GeminiMessage Component', () => {
+  const mockGeminiTextMessage: ChatMessage = {
+    id: 'gemini-1',
+    content: 'This is a Gemini Pro response with multiple lines.\nSecond line here.',
+    type: 'gemini-text',
+    timestamp: new Date('2024-01-01T10:00:00Z'),
+    metadata: {
+      model: 'gemini-pro',
+      tokens: 150,
+      isStreaming: false,
+    },
+  }
+
+  const mockGeminiImageMessage: ChatMessage = {
+    id: 'gemini-2',
+    content: 'Here is your generated image:',
+    type: 'gemini-image',
+    timestamp: new Date('2024-01-01T10:00:00Z'),
+    metadata: {
+      model: 'gemini-pro-vision',
+      imageUrl: 'https://example.com/generated-image.jpg',
+      isStreaming: false,
+    },
+  }
+
+  const mockStreamingMessage: ChatMessage = {
+    id: 'gemini-3',
+    content: 'This is a partial response...',
+    type: 'gemini-text',
+    timestamp: new Date('2024-01-01T10:00:00Z'),
+    metadata: {
+      model: 'gemini-pro',
+      isStreaming: true,
+    },
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  describe('Text Message Display', () => {
+    it('should render Gemini text message correctly', () => {
+      render(<GeminiMessage message={mockGeminiTextMessage} />)
+
+      expect(screen.getByText('Gemini Pro')).toBeInTheDocument()
+      expect(screen.getByText('gemini-pro')).toBeInTheDocument()
+      expect(screen.getByText('150 tokens')).toBeInTheDocument()
+      expect(screen.getByText(/This is a Gemini Pro response/)).toBeInTheDocument()
+      expect(screen.getByText(/Second line here/)).toBeInTheDocument()
+    })
+
+    it('should format multi-line content with line breaks', () => {
+      render(<GeminiMessage message={mockGeminiTextMessage} />)
+
+      const contentElement = screen.getByText(/This is a Gemini Pro response/)
+      expect(contentElement).toBeInTheDocument()
+      
+      // Check that line breaks are rendered
+      const brElements = contentElement.querySelectorAll('br')
+      expect(brElements).toHaveLength(1)
+    })
+
+    it('should show timestamp in correct format', () => {
+      render(<GeminiMessage message={mockGeminiTextMessage} />)
+
+      const timestamp = new Date('2024-01-01T10:00:00Z').toLocaleTimeString()
+      expect(screen.getByText(timestamp)).toBeInTheDocument()
+    })
+
+    it('should display copy button for non-streaming messages', () => {
+      render(<GeminiMessage message={mockGeminiTextMessage} />)
+
+      const copyButton = screen.getByTitle('Copy message')
+      expect(copyButton).toBeInTheDocument()
+    })
+
+    it('should handle copy functionality', async () => {
+      const mockWriteText = vi.fn().mockResolvedValue(undefined)
+      navigator.clipboard.writeText = mockWriteText
+
+      render(<GeminiMessage message={mockGeminiTextMessage} />)
+
+      const copyButton = screen.getByTitle('Copy message')
+      fireEvent.click(copyButton)
+
+      expect(mockWriteText).toHaveBeenCalledWith(mockGeminiTextMessage.content)
+
+      // Should show check icon briefly
+      await waitFor(() => {
+        expect(screen.getByTitle('Copy message')).toBeInTheDocument()
+      })
+    })
+
+    it('should handle copy error gracefully', async () => {
+      const mockWriteText = vi.fn().mockRejectedValue(new Error('Copy failed'))
+      navigator.clipboard.writeText = mockWriteText
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+      render(<GeminiMessage message={mockGeminiTextMessage} />)
+
+      const copyButton = screen.getByTitle('Copy message')
+      fireEvent.click(copyButton)
+
+      await waitFor(() => {
+        expect(consoleSpy).toHaveBeenCalledWith('Failed to copy text:', expect.any(Error))
+      })
+
+      consoleSpy.mockRestore()
+    })
+  })
+
+  describe('Image Message Display', () => {
+    it('should render Gemini image message correctly', () => {
+      render(<GeminiMessage message={mockGeminiImageMessage} />)
+
+      expect(screen.getByText('Gemini Vision')).toBeInTheDocument()
+      expect(screen.getByText('gemini-pro-vision')).toBeInTheDocument()
+      expect(screen.getByText('Here is your generated image:')).toBeInTheDocument()
+      
+      const image = screen.getByAltText('Generated by Gemini')
+      expect(image).toBeInTheDocument()
+      expect(image).toHaveAttribute('src', 'https://example.com/generated-image.jpg')
+    })
+
+    it('should not show image if imageUrl is not provided', () => {
+      const messageWithoutImage = {
+        ...mockGeminiImageMessage,
+        metadata: {
+          ...mockGeminiImageMessage.metadata,
+          imageUrl: undefined,
+        },
+      }
+
+      render(<GeminiMessage message={messageWithoutImage} />)
+
+      expect(screen.queryByAltText('Generated by Gemini')).not.toBeInTheDocument()
+    })
+  })
+
+  describe('Streaming State', () => {
+    it('should show streaming indicator for streaming messages', () => {
+      render(<GeminiMessage message={mockStreamingMessage} />)
+
+      expect(screen.getByText('Generating...')).toBeInTheDocument()
+    })
+
+    it('should show thinking indicator for empty streaming content', () => {
+      const emptyStreamingMessage = {
+        ...mockStreamingMessage,
+        content: '',
+      }
+
+      render(<GeminiMessage message={emptyStreamingMessage} />)
+
+      expect(screen.getByText('Thinking...')).toBeInTheDocument()
+    })
+
+    it('should not show copy button for streaming messages', () => {
+      render(<GeminiMessage message={mockStreamingMessage} />)
+
+      expect(screen.queryByTitle('Copy message')).not.toBeInTheDocument()
+    })
+
+    it('should show streaming cursor for streaming messages with content', () => {
+      render(<GeminiMessage message={mockStreamingMessage} />)
+
+      // The streaming cursor should be present (mocked motion component)
+      expect(screen.getByText('This is a partial response...')).toBeInTheDocument()
+    })
+  })
+
+  describe('Styling and Layout', () => {
+    it('should apply correct styling classes', () => {
+      const { container } = render(<GeminiMessage message={mockGeminiTextMessage} />)
+
+      const messageContainer = container.firstChild as HTMLElement
+      expect(messageContainer).toHaveClass('flex', 'items-start', 'gap-3', 'p-4', 'rounded-lg')
+    })
+
+    it('should apply custom className', () => {
+      const { container } = render(
+        <GeminiMessage message={mockGeminiTextMessage} className="custom-class" />
+      )
+
+      const messageContainer = container.firstChild as HTMLElement
+      expect(messageContainer).toHaveClass('custom-class')
+    })
+
+    it('should show correct avatar icon for text messages', () => {
+      render(<GeminiMessage message={mockGeminiTextMessage} />)
+
+      // Check that the component renders with text message styling
+      expect(screen.getByText('Gemini Pro')).toBeInTheDocument()
+    })
+
+    it('should show correct avatar icon for image messages', () => {
+      render(<GeminiMessage message={mockGeminiImageMessage} />)
+
+      // Check that the component renders with image message styling
+      expect(screen.getByText('Gemini Vision')).toBeInTheDocument()
+    })
+  })
+})
+
+describe('ChatMessageDisplay Component', () => {
+  const mockUserMessage: ChatMessage = {
+    id: 'user-1',
+    content: 'Hello, how are you?',
+    type: 'user',
+    timestamp: new Date('2024-01-01T10:00:00Z'),
+  }
+
+  const mockAIMessage: ChatMessage = {
+    id: 'ai-1',
+    content: 'I am doing well, thank you!',
+    type: 'ai',
+    timestamp: new Date('2024-01-01T10:00:01Z'),
+  }
+
+  // Re-declare mockGeminiTextMessage for this scope
+  const mockGeminiTextMessage: ChatMessage = {
+    id: 'gemini-1',
+    content: 'This is a Gemini Pro response with multiple lines.\nSecond line here.',
+    type: 'gemini-text',
+    timestamp: new Date('2024-01-01T10:00:00Z'),
+    metadata: {
+      model: 'gemini-pro',
+      tokens: 150,
+      isStreaming: false,
+    },
+  }
+
+  it('should render Gemini messages using GeminiMessage component', () => {
+    render(<ChatMessageDisplay message={mockGeminiTextMessage} />)
+
+    expect(screen.getByText('Gemini Pro')).toBeInTheDocument()
+    expect(screen.getByText('gemini-pro')).toBeInTheDocument()
+  })
+
+  it('should render user messages with correct styling', () => {
+    const { container } = render(<ChatMessageDisplay message={mockUserMessage} />)
+
+    expect(screen.getByText('Hello, how are you?')).toBeInTheDocument()
+    expect(screen.getByText('U')).toBeInTheDocument() // User avatar
+    
+    const messageContainer = container.firstChild as HTMLElement
+    expect(messageContainer).toHaveClass('ml-8') // User message alignment
+  })
+
+  it('should render AI messages with correct styling', () => {
+    const { container } = render(<ChatMessageDisplay message={mockAIMessage} />)
+
+    expect(screen.getByText('I am doing well, thank you!')).toBeInTheDocument()
+    expect(screen.getByText('AI')).toBeInTheDocument() // AI avatar
+    
+    const messageContainer = container.firstChild as HTMLElement
+    expect(messageContainer).toHaveClass('mr-8') // AI message alignment
+  })
+
+  it('should apply custom className to all message types', () => {
+    const { container: userContainer } = render(
+      <ChatMessageDisplay message={mockUserMessage} className="custom-user" />
+    )
+    const { container: geminiContainer } = render(
+      <ChatMessageDisplay message={mockGeminiTextMessage} className="custom-gemini" />
+    )
+
+    expect(userContainer.firstChild).toHaveClass('custom-user')
+    expect(geminiContainer.firstChild).toHaveClass('custom-gemini')
+  })
+
+  it('should show timestamp for all message types', () => {
+    render(<ChatMessageDisplay message={mockUserMessage} />)
+    render(<ChatMessageDisplay message={mockGeminiTextMessage} />)
+
+    const timestamp = new Date('2024-01-01T10:00:00Z').toLocaleTimeString()
+    const elements = screen.getAllByText(timestamp)
+    expect(elements).toHaveLength(2) // One for user message, one for Gemini message
+  })
+})
