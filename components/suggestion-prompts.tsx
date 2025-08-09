@@ -76,7 +76,7 @@ export function SuggestionPrompts({ onSelectPrompt, className }: SuggestionPromp
               >
                 <div className="suggestion-prompt-content">
                   <div className="suggestion-prompt-icon bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                    <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                    <Icon className="w-3 h-3 sm:w-5 sm:h-5 text-primary" />
                   </div>
                   <div className="suggestion-prompt-text">
                     <div>
