@@ -58,7 +58,7 @@ export function SuggestionPrompts({ onSelectPrompt, className }: SuggestionPromp
         </p>
       </div>
 
-      <div className="suggestion-prompt-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
+      <div className="suggestion-prompt-grid grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl mx-auto">
         {suggestions.map((suggestion, index) => {
           const Icon = suggestion.icon
           return (
@@ -72,11 +72,11 @@ export function SuggestionPrompts({ onSelectPrompt, className }: SuggestionPromp
               <Button
                 variant="outline"
                 onClick={() => onSelectPrompt(suggestion.prompt)}
-                className="suggestion-prompt-card w-full h-full p-4 text-left hover:bg-muted/50 transition-colors group"
+                className="suggestion-prompt-card w-full h-full p-3 sm:p-4 text-left hover:bg-muted/50 transition-colors group"
               >
                 <div className="suggestion-prompt-content">
                   <div className="suggestion-prompt-icon bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                    <Icon className="w-5 h-5 text-primary" />
+                    <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                   </div>
                   <div className="suggestion-prompt-text">
                     <div>
