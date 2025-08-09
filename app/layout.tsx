@@ -34,7 +34,6 @@ html {
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
-          suppressHydrationWarning
         >
           <TRPCProvider>
             <Auth0ProviderWrapper>
