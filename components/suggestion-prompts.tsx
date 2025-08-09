@@ -58,7 +58,7 @@ export function SuggestionPrompts({ onSelectPrompt, className }: SuggestionPromp
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl mx-auto">
+      <div className="suggestion-prompt-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
         {suggestions.map((suggestion, index) => {
           const Icon = suggestion.icon
           return (
@@ -67,22 +67,25 @@ export function SuggestionPrompts({ onSelectPrompt, className }: SuggestionPromp
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
+              className="h-full"
             >
               <Button
                 variant="outline"
                 onClick={() => onSelectPrompt(suggestion.prompt)}
-                className="w-full h-auto p-4 text-left hover:bg-muted/50 transition-colors group"
+                className="suggestion-prompt-card w-full h-full p-4 text-left hover:bg-muted/50 transition-colors group"
               >
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
-                    <Icon className="w-4 h-4 text-primary" />
+                <div className="suggestion-prompt-content">
+                  <div className="suggestion-prompt-icon bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                    <Icon className="w-5 h-5 text-primary" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm mb-1">{suggestion.title}</div>
-                    <div className="text-xs text-muted-foreground line-clamp-2">
-                      {suggestion.prompt}
+                  <div className="suggestion-prompt-text">
+                    <div>
+                      <div className="suggestion-prompt-title">{suggestion.title}</div>
+                      <div className="suggestion-prompt-description">
+                        {suggestion.prompt}
+                      </div>
                     </div>
-                    <div className="text-xs text-primary mt-2 font-medium">
+                    <div className="suggestion-prompt-category">
                       {suggestion.category}
                     </div>
                   </div>
