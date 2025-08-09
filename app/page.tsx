@@ -15,7 +15,7 @@ import { SuggestionPrompts } from "@/components/suggestion-prompts"
 import ThinkingIndicator from "@/components/thinking-indicator"
 import LandingPage from "@/components/landing-page"
 import { RateLimitAlert } from "@/components/rate-limit-alert"
-import { DebugPanel } from "@/components/debug-panel"
+
 import { HuggingFaceSetupError } from "@/components/huggingface-setup-error"
 
 
@@ -38,7 +38,6 @@ export default function ChatInterface() {
   // Use Gemini chat integration
   const chat = useChatGemini({
     onError: (error) => {
-      console.error('Chat error:', error)
       setShowError(true)
     }
   })
@@ -75,7 +74,6 @@ export default function ChatInterface() {
 
   const handleLogin = (userData: { name: string; email: string }) => {
     // This is now handled by Auth0 context
-    console.log('User logged in:', userData)
   }
 
   const handleLogout = () => {
@@ -294,14 +292,7 @@ export default function ChatInterface() {
         />
       </footer>
 
-      {/* Debug Panel */}
-      <DebugPanel
-        isGenerating={chat.isGenerating}
-        isStreaming={chat.isStreaming}
-        error={chat.error}
-        rateLimit={chat.rateLimit}
-        messagesCount={chat.messages.length}
-      />
+
     </div>
   )
 }

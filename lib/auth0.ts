@@ -60,7 +60,6 @@ export const getAuth0ProviderOptions = () => {
     onRedirectCallback: (appState?: AppState) => {
       // Redirect to the main app after successful authentication
       const targetUrl = appState?.returnTo || '/'
-      console.log('Auth0 callback completed, redirecting to:', targetUrl)
       // Use replace instead of href to avoid page reload
       window.history.replaceState({}, document.title, targetUrl)
       // Force a small delay to ensure state is updated

@@ -204,7 +204,7 @@ export default function SimpleAppHeader({ userData, onLogout }: AppHeaderProps =
         isOpen={historyModal}
         onClose={() => setHistoryModal(false)}
         onSelectChat={(chatId) => {
-          console.log("Selected chat:", chatId)
+          // Handle chat selection
         }}
       />
 

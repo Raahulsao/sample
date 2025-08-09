@@ -230,13 +230,15 @@ export default function LandingPage({ onLogin }: LandingPageProps) {
             {features.map((feature, index) => (
               <div
                 key={index}
-                className="bg-card border border-border rounded-lg p-6 hover:shadow-lg transition-shadow"
+                className="bg-card border border-border rounded-lg p-6 hover:shadow-lg transition-shadow h-full flex flex-col"
               >
-                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4 flex-shrink-0">
                   <feature.icon className="h-6 w-6 text-primary" />
                 </div>
-                <h3 className="text-xl font-semibold text-foreground mb-2">{feature.title}</h3>
-                <p className="text-muted-foreground">{feature.description}</p>
+                <div className="flex-1 flex flex-col">
+                  <h3 className="text-xl font-semibold text-foreground mb-3 leading-tight">{feature.title}</h3>
+                  <p className="text-muted-foreground leading-relaxed flex-1">{feature.description}</p>
+                </div>
               </div>
             ))}
           </div>
