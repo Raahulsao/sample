@@ -12,7 +12,15 @@ export interface Auth0Config {
 export const getAuth0Config = (): Auth0Config => {
   const domain = process.env.NEXT_PUBLIC_AUTH0_DOMAIN
   const clientId = process.env.NEXT_PUBLIC_AUTH0_CLIENT_ID
-  const redirectUri = process.env.NEXT_PUBLIC_AUTH0_REDIRECT_URI || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000')
+  
+  // Always use the callback URL with /callback path
+  let redirectUri = process.env.NEXT_PUBLIC_AUTH0_REDIRECT_URI
+  
+  if (!redirectUri && typeof window !== 'undefined') {
+    redirectUri = `${window.location.origin}/callback`
+  } else if (!redirectUri) {
+    redirectUri = 'http://localhost:3000/callback'
+  }
 
   if (!domain || !clientId) {
     throw new Error(
